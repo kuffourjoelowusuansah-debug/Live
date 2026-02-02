@@ -1,60 +1,51 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyAYUBkVTNELQLKETcodaJDhNaUirAyaosQ",
-    authDomain: "livee-3bb22.firebaseapp.com",
-    projectId: "livee-3bb22",
-    storageBucket: "livee-3bb22.firebasestorage.app",
-    messagingSenderId: "970845322855",
-    appId: "1:970845322855:web:e17a3560aa2ee1b2285ec2",
-    measurementId: "G-26TLCWNMRY"
-};
+// USE YOUR CONFIG FROM THE PREVIOUS STEPS HERE
+const firebaseConfig = { ... }; 
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-const sendBtn = document.getElementById('send');
-const msgInp = document.getElementById('msg');
-const fileInp = document.getElementById('file');
-const chatBox = document.getElementById('chat');
+// Google Login
+document.getElementById('google-login').onclick = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    
+    // Create Profile in Database if it doesn't exist
+    await setDoc(doc(db, "users", user.uid), {
+        username: user.displayName,
+        nickname: user.displayName,
+        likes: 0,
+        followers: 0,
+        views: 0,
+        comments: 0
+    }, { merge: true });
 
-sendBtn.onclick = async () => {
-    const file = fileInp.files[0];
-    let url = null;
-    let type = null;
-
-    if(file) {
-        const sRef = ref(storage, 'uploads/' + Date.now() + "_" + file.name);
-        const snap = await uploadBytes(sRef, file);
-        url = await getDownloadURL(snap.ref);
-        type = file.type.split('/')[0]; // 'image' or 'video'
-    }
-
-    if(msgInp.value.trim() || url) {
-        await addDoc(collection(db, "messages"), {
-            text: msgInp.value,
-            file: url,
-            type: type,
-            time: serverTimestamp()
-        });
-        msgInp.value = "";
-        fileInp.value = "";
-    }
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+    showTab('feed');
 };
 
-onSnapshot(query(collection(db, "messages"), orderBy("time")), (snap) => {
-    chatBox.innerHTML = "";
-    snap.forEach(doc => {
-        const d = doc.data();
-        const div = document.createElement('div');
-        div.className = "msg-box";
-        if(d.text) div.innerHTML += `<p style="margin:0">${d.text}</p>`;
-        if(d.file && d.type === 'image') div.innerHTML += `<img src="${d.file}">`;
-        if(d.file && d.type === 'video') div.innerHTML += `<video src="${d.file}" controls></video>`;
-        chatBox.appendChild(div);
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
-});
+// Tab Switching Logic
+window.showTab = async (tabName) => {
+    const area = document.getElementById('content-area');
+    if(tabName === 'profile') {
+        const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        const data = userSnap.data();
+        area.innerHTML = `
+            <div class="profile">
+                <h2>@${data.username}</h2>
+                <div class="stats-grid">
+                    <div><span class="stat-num">${data.likes}</span><span class="stat-label">Likes</span></div>
+                    <div><span class="stat-num">${data.followers}</span><span class="stat-label">Followers</span></div>
+                    <div><span class="stat-num">${data.views}</span><span class="stat-label">Views</span></div>
+                    <div><span class="stat-num">${data.comments}</span><span class="stat-label">Comments</span></div>
+                </div>
+            </div>`;
+    } 
+    // Add logic for 'feed' and 'chat' tabs similarly...
+}
