@@ -1,18 +1,18 @@
-// Error logger for mobile debugging
-window.onerror = function(m) { alert("Livee Error: " + m); };
+// This makes errors pop up as alerts on your phone so we can see what's wrong
+window.onerror = (m) => alert("Livee Error: " + m);
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// YOUR CLEAN CONFIG
 const firebaseConfig = {
     apiKey: "AIzaSyAYUBkVTNELQLKETcodaJDhNaUirAyaosQ",
     authDomain: "livee-3bb22.firebaseapp.com",
     projectId: "livee-3bb22",
     storageBucket: "livee-3bb22.firebasestorage.app",
     messagingSenderId: "970845322855",
-    appId: "1:970845322855:web:e17a3560aa2ee1b2285ec2",
-    measurementId: "G-26TLCWNMRY"
+    appId: "1:970845322855:web:e17a3560aa2ee1b2285ec2"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -20,15 +20,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// 1. Handle the Google Login Button
-const loginBtn = document.getElementById('google-login');
-if (loginBtn) {
-    loginBtn.onclick = () => {
-        signInWithRedirect(auth, provider);
-    };
-}
+// 1. SIMPLE LOGIN
+document.getElementById('google-login').onclick = () => signInWithRedirect(auth, provider);
 
-// 2. Watch for the User logging in
+// 2. AUTOMATIC PROFILE LOADING
 onAuthStateChanged(auth, async (user) => {
     const authScreen = document.getElementById('auth-screen');
     const mainApp = document.getElementById('main-app');
@@ -37,14 +32,11 @@ onAuthStateChanged(auth, async (user) => {
         authScreen.classList.add('hidden');
         mainApp.classList.remove('hidden');
         
-        // Save/Update user profile
-        const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
+        // This creates your profile data automatically
+        await setDoc(doc(db, "users", user.uid), {
             username: user.displayName,
             nickname: user.displayName.split(' ')[0],
-            likes: 0,
-            followers: 0,
-            views: 0
+            likes: 0, followers: 0, views: 0
         }, { merge: true });
         
         showTab('profile'); 
@@ -54,12 +46,10 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// 3. Tab Navigation
+// 3. TAB NAVIGATION
 window.showTab = async (tab) => {
     const area = document.getElementById('content-area');
-    if (!auth.currentUser) return;
-
-    if (tab === 'profile') {
+    if (tab === 'profile' && auth.currentUser) {
         const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
         const d = snap.data();
         area.innerHTML = `
@@ -71,11 +61,8 @@ window.showTab = async (tab) => {
                     <div><b>${d.followers}</b><br>Followers</div>
                     <div><b>${d.views}</b><br>Views</div>
                 </div>
-                <button onclick="window.logout()" style="margin-top:30px; background:red; color:white; border:none; padding:10px 20px; border-radius:20px;">Logout</button>
             </div>`;
     } else {
-        area.innerHTML = `<h2 style="padding:20px;">${tab.toUpperCase()} Coming Soon</h2>`;
+        area.innerHTML = `<h2 style="padding:20px;">${tab} Tab</h2><p>Coming soon!</p>`;
     }
 };
-
-window.logout = () => signOut(auth);
