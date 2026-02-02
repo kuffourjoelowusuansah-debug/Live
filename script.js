@@ -2,14 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// PASTE YOUR CONFIG HERE
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_ID",
-  appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAYUBkVTNELQLKETcodaJDhNaUirAyaosQ",
+    authDomain: "livee-3bb22.firebaseapp.com",
+    projectId: "livee-3bb22",
+    storageBucket: "livee-3bb22.firebasestorage.app",
+    messagingSenderId: "970845322855",
+    appId: "1:970845322855:web:e17a3560aa2ee1b2285ec2",
+    measurementId: "G-26TLCWNMRY"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -27,14 +27,14 @@ sendBtn.onclick = async () => {
     let type = null;
 
     if(file) {
-        const sRef = ref(storage, Date.now() + file.name);
-        await uploadBytes(sRef, file);
-        url = await getDownloadURL(sRef);
-        type = file.type.split('/')[0];
+        const sRef = ref(storage, 'uploads/' + Date.now() + "_" + file.name);
+        const snap = await uploadBytes(sRef, file);
+        url = await getDownloadURL(snap.ref);
+        type = file.type.split('/')[0]; // 'image' or 'video'
     }
 
-    if(msgInp.value || url) {
-        await addDoc(collection(db, "msgs"), {
+    if(msgInp.value.trim() || url) {
+        await addDoc(collection(db, "messages"), {
             text: msgInp.value,
             file: url,
             type: type,
@@ -45,13 +45,13 @@ sendBtn.onclick = async () => {
     }
 };
 
-onSnapshot(query(collection(db, "msgs"), orderBy("time")), (snap) => {
+onSnapshot(query(collection(db, "messages"), orderBy("time")), (snap) => {
     chatBox.innerHTML = "";
     snap.forEach(doc => {
         const d = doc.data();
         const div = document.createElement('div');
         div.className = "msg-box";
-        if(d.text) div.innerHTML += `<p>${d.text}</p>`;
+        if(d.text) div.innerHTML += `<p style="margin:0">${d.text}</p>`;
         if(d.file && d.type === 'image') div.innerHTML += `<img src="${d.file}">`;
         if(d.file && d.type === 'video') div.innerHTML += `<video src="${d.file}" controls></video>`;
         chatBox.appendChild(div);
