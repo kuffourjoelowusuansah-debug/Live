@@ -2,19 +2,29 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livee</title>
+    <title>Livee Social</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app">
-        <header><h1>Livee</h1></header>
-        <div id="chat" class="chat"></div>
-        <div class="footer">
-            <label class="btn">📷<input type="file" id="file" hidden></label>
-            <input type="text" id="msg" placeholder="Type a message...">
-            <button id="send">Send</button>
+    <div id="auth-screen" class="screen">
+        <h1>Livee</h1>
+        <button id="google-login">Login with Google</button>
+        <div id="phone-auth">
+            <input type="tel" id="phone-number" placeholder="+123456789">
+            <button id="send-code">Send SMS Code</button>
         </div>
     </div>
+
+    <div id="main-app" class="screen hidden">
+        <div id="content-area"></div>
+        
+        <nav class="tab-bar">
+            <button onclick="showTab('feed')">📺 Feed</button>
+            <button onclick="showTab('chat')">💬 Chat</button>
+            <button onclick="showTab('profile')">👤 Me</button>
+        </nav>
+    </div>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>
